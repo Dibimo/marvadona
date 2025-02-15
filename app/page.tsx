@@ -1,101 +1,74 @@
-import Image from "next/image";
+'use client'
+import { FormEvent, useState } from "react";
+const { differenceInMinutes } = require("date-fns");
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const [ entry, setEntry ] = useState("");
+  const [ entryLunch, setEntryLunch ] = useState("");
+  const [ endLunch, setEndLunch ] = useState("");
+  const [ end, setEnd ] = useState("");
+
+  const [ error, setError ] = useState(false)
+
+  async function handleCalculate(e: FormEvent){
+      e.preventDefault();
+
+      const workTime = 8
+      
+      if (!entry || !entryLunch || !endLunch) {
+          setError(true)
+          return
+      }
+      setError(false)
+
+      let date_entry = new Date(`1970-01-01T${entry}:00Z`);
+      let date_entryLunch = new Date(`1970-01-01T${entryLunch}:00Z`);
+
+      let diff_hours_first_period = Math.floor(differenceInMinutes(date_entryLunch, date_entry) / 60)
+      let diff_minute_first_period = differenceInMinutes(date_entryLunch, date_entry) % 60
+
+      let rest_work_minutes = (60 - diff_minute_first_period == 60 ? 0 : 60 - diff_minute_first_period)
+      let rest_work_hours = workTime - diff_hours_first_period - (rest_work_minutes == 0 ? 0 : 1) 
+      
+      let get_hours_end_lunch = endLunch.split(":")[0]
+      let get_minutes_end_lunch = endLunch.split(":")[1]
+
+      let exit_minutes = (Number(get_minutes_end_lunch) + rest_work_minutes) >= 60 ? (Number(get_minutes_end_lunch) + rest_work_minutes) - 60 : (Number(get_minutes_end_lunch) + rest_work_minutes)
+      let exit_hour = (Number(get_minutes_end_lunch) + rest_work_minutes) >= 60 ? (Number(get_hours_end_lunch) + rest_work_hours) + 1 : (Number(get_hours_end_lunch) + rest_work_hours)
+
+      let format_exit_minutes = exit_minutes < 10 ? String().concat("0"+exit_minutes) : exit_minutes
+      let format_exit_hour = exit_hour < 10 ? String().concat("0"+exit_hour) : exit_hour
+
+      let exit_time = String().concat(format_exit_hour+":"+format_exit_minutes)
+
+      setEnd(exit_time)
+      
+  }
+
+  return (
+    <div className="w-full h-[100vh] overflow-hidden flex flex-col items-center justify-center">
+        <span className="text-3xl mb-5 text-slate-400">Olá, hoje é <span className="font-bold text-slate-100">{new Date().toLocaleDateString("pt-Br", { weekday: "long" })}</span>!</span>
+        <div className="w-1/2 flex flex-col space-y-2 lg:w-1/4">
+          <div className="">
+            <span className="font-bold text-slate-200">Entrada</span>
+            <input type="time" className="w-full text-lg bg-transparent rounded-md ring-1 ring-slate-200 px-5 py-2 outline-none" value={entry} onChange={(e) => setEntry(e.target.value)}/>
+          </div>
+          <div className="">
+            <span className="font-bold text-slate-200">Saida pro armosso</span>
+            <input type="time" className="w-full text-lg bg-transparent rounded-md ring-1 ring-slate-200 px-5 py-2 outline-none" value={entryLunch} onChange={(e) => setEntryLunch(e.target.value)}/>
+          </div>
+          <div className="">
+            <span className="font-bold text-slate-200">Vorta do armosso</span>
+            <input type="time" className="w-full text-lg bg-transparent rounded-md ring-1 ring-slate-200 px-5 py-2 outline-none" value={endLunch} onChange={(e) => setEndLunch(e.target.value)}/>
+          </div>
+          <div className="">
+            <span className="font-bold text-slate-600">Saida</span>
+            <input type="time" disabled={true} className="w-full text-lg bg-transparent rounded-md text-slate-600 ring-1 ring-slate-600 px-5 py-2 outline-none" value={end} onChange={(e) => setEnd(e.target.value)}/>
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <span className={`my-5 ${error ? 'text-red-300' : 'text-transparent select-none' }  font-bold`}>*Você deve prencher todos os campos necessários para calcular o período final</span>
+        <button onClick={(e) => handleCalculate(e)} className="w-1/2 bg-emerald-600 text-slate-200 font-bold px-5 py-2 rounded-md hover:bg-emerald-500 transition-all ease-in delay-75 lg:w-1/4">Calcular Horário de Saída</button>
     </div>
   );
 }
